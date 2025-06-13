@@ -8,11 +8,22 @@ export default [
   ...tseslint.configs.recommendedTypeChecked,
   {
     files: ['**/*.ts'],
-    ignores: ['dist/', 'dev/']
+    ignores: ['dist/'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.json',
+        sourceType: 'module',
+      },
+    },
+  },
+  {
+    files: ['dev/**/*.ts'],
+    ignores: ['dist/'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: './tsconfig.dev.json',
         sourceType: 'module',
       },
     },
