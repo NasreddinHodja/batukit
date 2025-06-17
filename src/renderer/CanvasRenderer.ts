@@ -10,11 +10,11 @@ interface RenderOptions {
 export class CanvasRenderer {
   private font: Font | null = null;
 
-  constructor(
+  private constructor(
     public context: CanvasRenderingContext2D,
-    public options?: RenderOptions,
     public width: number = 600,
-    public height: number = 300
+    public height: number = 300,
+    public options?: RenderOptions
   ) {
     this.context.canvas.width = width;
     this.context.canvas.height = height;
@@ -23,8 +23,13 @@ export class CanvasRenderer {
     this.options = options ?? CanvasRenderer.getDefaultOptions();
   }
 
-  static async init(ctx: CanvasRenderingContext2D): Promise<CanvasRenderer> {
-    const renderer = new CanvasRenderer(ctx);
+  static async init(
+    ctx: CanvasRenderingContext2D,
+    width: number = 600,
+    height: number = 300,
+    options?: RenderOptions
+  ): Promise<CanvasRenderer> {
+    const renderer = new CanvasRenderer(ctx, width, height, options);
     await renderer.ensureFontLoaded();
     return renderer;
   }
