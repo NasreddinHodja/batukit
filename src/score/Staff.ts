@@ -7,9 +7,9 @@ const DEFAULT_STAFF_LINES: StaffLines = 5;
 
 export class Staff {
   constructor(
-    public lines: StaffLines = DEFAULT_STAFF_LINES,
-    public length: number = DEFAULT_STAFF_LENGTH,
+    public measures: Measure[],
     public y: number,
-    public measures: Measure[]
+    public lines: StaffLines = DEFAULT_STAFF_LINES,
+    public length: number = DEFAULT_STAFF_LENGTH
   ) {}
 }
