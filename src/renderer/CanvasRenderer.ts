@@ -1,4 +1,6 @@
-import { Color } from '@/renderer';
+import { Note } from '@/score';
+import { Color } from './Color';
+import opentype, { Font, Path } from 'opentype.js';
 
 interface RenderOptions {
   foreground: Color;
@@ -6,14 +8,44 @@ interface RenderOptions {
 }
 
 export class CanvasRenderer {
+  private font: Font | null = null;
+
   constructor(
     public context: CanvasRenderingContext2D,
-    public options?: RenderOptions
+    public options?: RenderOptions,
+    public width: number = 600,
+    public height: number = 300
   ) {
-    this.options = options ?? {
-      foreground: new Color('#000000'),
-      background: new Color('#ffffff'),
-    };
+    this.context.canvas.width = width;
+    this.context.canvas.height = height;
+    this.context.canvas.style.width = `${width}px`;
+    this.context.canvas.style.height = `${height}px`;
+    this.options = options ?? CanvasRenderer.getDefaultOptions();
+  }
+
+  static async init(ctx: CanvasRenderingContext2D): Promise<CanvasRenderer> {
+    const renderer = new CanvasRenderer(ctx);
+    await renderer.ensureFontLoaded();
+    return renderer;
+  }
+
+  async loadFont() {
+    if (this.font) return;
+    const bravuraURL = new URL('../fonts/Bravura.otf', import.meta.url).toString();
+    const response = await fetch(bravuraURL);
+    const arrayBuffer = await response.arrayBuffer();
+    this.font = opentype.parse(arrayBuffer);
+  }
+
+  async drawPath(path: Path2D) {
+    await this.ensureFontLoaded();
+
+    this.setForegroundFillStyle();
+    this.context.fill(path);
+  }
+
+  async ensureFontLoaded() {
+    if (!this.font) await this.loadFont();
   }
 
   drawBackground() {
@@ -22,13 +54,39 @@ export class CanvasRenderer {
     this.context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  drawLine(x1: number, y1: number, x2: number, y2: number) {
-    console.log(`drawLine(x1: ${x1}, y1: ${y1}, x2: ${x2}, y2: ${y2})`);
+  async drawNote(note: Note, x: number, y: number) {
+    const indices = note.toGlyphIndices();
+    const path = this.combinePaths(
+      indices.map((i) => this.getGlyphPath(i, x, y)).filter((p) => p !== undefined)
+    );
+    const canvasPath = new Path2D(path.toPathData(2));
+    await this.drawPath(canvasPath);
   }
-  drawCircle(x: number, y: number, r: number) {
-    console.log(`drawCircle(x: ${x}, y: ${y}, r: ${r}`);
+
+  getGlyphPath(index: number, x: number, y: number, size: number = 48): Path {
+    const glyph = this.font?.glyphs.get(index);
+    if (!glyph) {
+      throw Error(`Glyph ${index} not found`);
+    }
+    const path = glyph.getPath(x, y, size);
+    return path;
   }
-  drawText(text: string, x: number, y: number) {
-    console.log(`drawText(text: ${text}, x: ${x}, y: ${y}`);
+
+  combinePaths(paths: Path[]): Path {
+    const combined = new opentype.Path();
+    combined.commands.push(...paths.flatMap((p) => p.commands));
+    return combined;
+  }
+
+  setForegroundFillStyle() {
+    this.context.fillStyle = (this.options?.foreground.hex ??
+      CanvasRenderer.getDefaultOptions().foreground) as string;
+  }
+
+  static getDefaultOptions() {
+    return {
+      foreground: new Color('#ffffff'),
+      background: new Color('#000000'),
+    };
   }
 }

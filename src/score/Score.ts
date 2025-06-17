@@ -1,5 +1,5 @@
-import { Measure } from '@/score';
+import { Staff } from '@/score';
 
 export class Score {
-  constructor(public measures: Measure[] = []) {}
+  constructor(public staves: Staff[] = []) {}
 }

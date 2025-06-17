@@ -1,12 +1,16 @@
 export class Color {
-  private hex: string;
+  private _hex: string;
 
   constructor(hex: string) {
     if (!Color.isColor(hex)) {
       throw new Error(`Invalid hex color: ${hex}`);
     }
 
-    this.hex = hex;
+    this._hex = hex;
+  }
+
+  get hex() {
+    return this._hex;
   }
 
   // 3 | 6 | 8 digit hex color

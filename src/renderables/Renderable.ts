@@ -1,5 +1,5 @@
 import { CanvasRenderer } from '@/renderer';
 
 export interface Renderable {
-  render(renderer: CanvasRenderer): void;
+  render(renderer: CanvasRenderer): Promise<void>;
 }
