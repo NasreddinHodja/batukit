@@ -69,33 +69,31 @@ export class CanvasRenderer {
     const paths = [];
     const glyphs = this.getNoteGlyphs(note);
     const headPath = this.getGlyphPath(glyphs.head, x, y, size);
-    const stemDown = note.options.stemDirection === 'down';
+    const stemUp = note.options.stemDirection === 'up';
     paths.push(headPath);
 
     if (glyphs.stem !== null) {
-      const xOffset = stemDown ? size * 0.02 : size * 0.27;
-      const yOffset = stemDown ? size * 0.875 : 0;
+      const xOffset = stemUp ? size * 0.27 : size * 0.02;
+      const yOffset = stemUp ? 0 : size * 0.875;
       const stemPath = this.getGlyphPath(glyphs.stem, x + xOffset, y + yOffset, size);
       paths.push(stemPath);
     }
 
     if (glyphs.flag !== null) {
-      // const xOffset = stemDown ? 0 : size * 0.27;
-      // const yOffset = stemDown ? size * 0.86 : size * -0.9;
-      // const flagPath = this.getGlyphPath(glyphs.flag, x + xOffset, y + yOffset, size);
-      // paths.push(flagPath);
+      const xOffset = stemUp ? size * 0.27 : 0;
+      const yOffset = stemUp ? size * -0.8 : size * 0.86;
+      const flagPath = this.getGlyphPath(glyphs.flag, x + xOffset, y + yOffset, size);
+      paths.push(flagPath);
     }
 
     const path = this.combinePaths(paths);
     const canvasPath = new Path2D(path.toPathData(2));
     await this.drawPath(canvasPath);
 
-    // const box = path.getBoundingBox();
-    // const boxWidth = Math.abs(box.x1 - box.x2);
-    // const boxHeight = Math.abs(box.y1 - box.y2);
-    // this.context.strokeStyle = 'white';
-    // this.context.strokeRect(box.x1, box.y1, boxWidth, boxHeight);
-    // console.log(boxHeight);
+    const box = path.getBoundingBox();
+    const boxWidth = Math.abs(box.x1 - box.x2);
+    const boxHeight = Math.abs(box.y1 - box.y2);
+    console.log(boxHeight * boxWidth);
   }
 
   getNoteGlyphs(note: Note): NoteGlyphs {
