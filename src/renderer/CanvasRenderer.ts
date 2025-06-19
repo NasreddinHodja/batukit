@@ -89,11 +89,6 @@ export class CanvasRenderer {
     const path = this.combinePaths(paths);
     const canvasPath = new Path2D(path.toPathData(2));
     await this.drawPath(canvasPath);
-
-    const box = path.getBoundingBox();
-    const boxWidth = Math.abs(box.x1 - box.x2);
-    const boxHeight = Math.abs(box.y1 - box.y2);
-    console.log(boxHeight * boxWidth);
   }
 
   getNoteGlyphs(note: Note): NoteGlyphs {
