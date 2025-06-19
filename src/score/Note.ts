@@ -14,31 +14,56 @@ export type Flag = keyof typeof flagGlyphs;
 
 export type StemDirection = 'up' | 'down';
 
+export type NoteGlyphIndices = {
+  head: number;
+  stem: number | null;
+  flag: number | null;
+};
+
+type NoteOptions = {
+  noteHead: NoteHead;
+  stemDirection: StemDirection;
+};
+
+const defaultNoteOptions: NoteOptions = {
+  noteHead: 'black',
+  stemDirection: 'up',
+};
+
 export class Note {
-  constructor(
-    public pitch: Pitch,
-    public duration: Duration,
-    public noteHead: NoteHead = 'black',
-    public stemDirection: StemDirection = 'up'
-  ) {}
+  pitch: Pitch;
+  duration: Duration;
+  options: NoteOptions;
+
+  constructor(pitch: Pitch, duration: Duration, options: Partial<NoteOptions>) {
+    this.pitch = pitch;
+    this.duration = duration;
+    this.options = { ...defaultNoteOptions, ...options };
+  }
 
   toString(): string {
     return `${this.pitch}:1/${this.duration}`;
   }
 
-  toGlyphIndices(): number[] {
-    const indices = [];
-    const headIndex = noteHeadGlyphs[this.noteHead].index;
-    indices.push(headIndex);
-    if (this.duration >= 4) {
-      const stemIndex = stemGlyphs.normal.index;
-      indices.push(stemIndex);
+  toGlyphIndices(): NoteGlyphIndices {
+    const headIndex = noteHeadGlyphs[this.options.noteHead].index;
+    let stemIndex = null;
+    let flagIndex = null;
+    if (this.hasStem()) {
+      stemIndex = stemGlyphs.normal.index;
     }
-    if (this.duration >= 8) {
-      const glyphName = `${this.stemDirection}${this.duration}` as Flag;
-      const flagIndex = flagGlyphs[glyphName].index;
-      indices.push(flagIndex);
+    if (this.hasFlag()) {
+      const glyphName = `${this.options.stemDirection}${this.duration}` as Flag;
+      flagIndex = flagGlyphs[glyphName].index;
     }
-    return indices;
+    return { head: headIndex, stem: stemIndex, flag: flagIndex };
+  }
+
+  hasStem(): boolean {
+    return this.duration >= 4;
+  }
+
+  hasFlag(): boolean {
+    return this.duration >= 8;
   }
 }

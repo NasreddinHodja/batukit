@@ -1,11 +1,17 @@
 import { Note } from '@/score';
 import { Color } from './Color';
-import opentype, { Font, Path } from 'opentype.js';
+import opentype, { Font, Glyph, Path } from 'opentype.js';
 
 interface RenderOptions {
   foreground: Color;
   background: Color;
 }
+
+type NoteGlyphs = {
+  head: Glyph;
+  stem: Glyph | null;
+  flag: Glyph | null;
+};
 
 export class CanvasRenderer {
   private font: Font | null = null;
@@ -59,22 +65,66 @@ export class CanvasRenderer {
     this.context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  async drawNote(note: Note, x: number, y: number) {
-    const indices = note.toGlyphIndices();
-    const path = this.combinePaths(
-      indices.map((i) => this.getGlyphPath(i, x, y)).filter((p) => p !== undefined)
-    );
+  async drawNote(note: Note, x: number, y: number, size: number = 48) {
+    const paths = [];
+    const glyphs = this.getNoteGlyphs(note);
+    const headPath = this.getGlyphPath(glyphs.head, x, y, size);
+    const stemDown = note.options.stemDirection === 'down';
+    paths.push(headPath);
+
+    if (glyphs.stem !== null) {
+      const xOffset = stemDown ? size * 0.02 : size * 0.27;
+      const yOffset = stemDown ? size * 0.875 : 0;
+      const stemPath = this.getGlyphPath(glyphs.stem, x + xOffset, y + yOffset, size);
+      paths.push(stemPath);
+    }
+
+    if (glyphs.flag !== null) {
+      // const xOffset = stemDown ? 0 : size * 0.27;
+      // const yOffset = stemDown ? size * 0.86 : size * -0.9;
+      // const flagPath = this.getGlyphPath(glyphs.flag, x + xOffset, y + yOffset, size);
+      // paths.push(flagPath);
+    }
+
+    const path = this.combinePaths(paths);
     const canvasPath = new Path2D(path.toPathData(2));
     await this.drawPath(canvasPath);
+
+    // const box = path.getBoundingBox();
+    // const boxWidth = Math.abs(box.x1 - box.x2);
+    // const boxHeight = Math.abs(box.y1 - box.y2);
+    // this.context.strokeStyle = 'white';
+    // this.context.strokeRect(box.x1, box.y1, boxWidth, boxHeight);
+    // console.log(boxHeight);
   }
 
-  getGlyphPath(index: number, x: number, y: number, size: number = 48): Path {
+  getNoteGlyphs(note: Note): NoteGlyphs {
+    const indices = note.toGlyphIndices();
+    const headGlyph = this.getGlyph(indices.head);
+    let stemGlyph = null;
+    let flagGlyph = null;
+
+    if (indices.stem !== null) {
+      stemGlyph = this.getGlyph(indices.stem);
+    }
+
+    if (indices.flag !== null) {
+      flagGlyph = this.getGlyph(indices.flag);
+    }
+
+    return { head: headGlyph, stem: stemGlyph, flag: flagGlyph };
+  }
+
+  getGlyph(index: number): Glyph {
     const glyph = this.font?.glyphs.get(index);
     if (!glyph) {
       throw Error(`Glyph ${index} not found`);
     }
-    const path = glyph.getPath(x, y, size);
-    return path;
+    return glyph;
+  }
+
+  getGlyphPath(glyph: Glyph, x: number, y: number, size: number): Path {
+    return glyph.getPath(x, y, size);
   }
 
   combinePaths(paths: Path[]): Path {
@@ -95,3 +145,48 @@ export class CanvasRenderer {
     };
   }
 }
+
+// function flipPathHorizontal(path: Path): Path {
+//   const bounds = path.getBoundingBox();
+//   const cx = (bounds.x1 + bounds.x2) / 2;
+
+//   const newPath = new Path();
+
+//   for (const cmd of path.commands) {
+//     switch (cmd.type) {
+//       case 'M':
+//       case 'L':
+//         newPath.commands.push({
+//           type: cmd.type,
+//           x: -cmd.x + 2 * cx,
+//           y: cmd.y,
+//         });
+//         break;
+//       case 'C':
+//         newPath.commands.push({
+//           type: 'C',
+//           x: -cmd.x + 2 * cx,
+//           y: cmd.y,
+//           x1: -cmd.x1 + 2 * cx,
+//           y1: cmd.y1,
+//           x2: -cmd.x2 + 2 * cx,
+//           y2: cmd.y2,
+//         });
+//         break;
+//       case 'Q':
+//         newPath.commands.push({
+//           type: 'Q',
+//           x: -cmd.x + 2 * cx,
+//           y: cmd.y,
+//           x1: -cmd.x1 + 2 * cx,
+//           y1: cmd.y1,
+//         });
+//         break;
+//       case 'Z':
+//         newPath.commands.push({ type: 'Z' });
+//         break;
+//     }
+//   }
+
+//   return newPath;
+// }
