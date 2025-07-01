@@ -1,4 +1,4 @@
-import { Note } from '@/score';
+import { layoutScore, Note, Score, Staff } from '@/score';
 import { Color } from './Color';
 import opentype, { Font, Glyph, Path } from 'opentype.js';
 
@@ -48,15 +48,12 @@ export class CanvasRenderer {
     this.font = opentype.parse(arrayBuffer);
   }
 
-  async drawPath(path: Path2D) {
-    await this.ensureFontLoaded();
-
-    this.setForegroundFillStyle();
-    this.context.fill(path);
-  }
-
   async ensureFontLoaded() {
     if (!this.font) await this.loadFont();
+  }
+
+  drawPath(path: Path2D) {
+    this.context.fill(path);
   }
 
   drawBackground() {
@@ -65,7 +62,26 @@ export class CanvasRenderer {
     this.context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  async drawNote(note: Note, x: number, y: number, size: number = 48) {
+  drawScore(score: Score) {
+    this.setForeground();
+
+    const renderables = layoutScore(score);
+
+    renderables.map((r) => {
+      r.render(this);
+    });
+  }
+
+  drawStaff(staff: Staff, x: number, y: number) {
+    this.context.lineWidth = 2;
+    this.context.beginPath();
+    this.context.moveTo(x, y);
+    this.context.lineTo(staff.options.length, y);
+    this.context.stroke();
+  }
+
+  drawNote(note: Note, x: number, y: number) {
+    const size = note.options.size;
     const paths = [];
     const glyphs = this.getNoteGlyphs(note);
     const headPath = this.getGlyphPath(glyphs.head, x, y, size);
@@ -88,7 +104,7 @@ export class CanvasRenderer {
 
     const path = this.combinePaths(paths);
     const canvasPath = new Path2D(path.toPathData(2));
-    await this.drawPath(canvasPath);
+    this.drawPath(canvasPath);
   }
 
   getNoteGlyphs(note: Note): NoteGlyphs {
@@ -126,9 +142,10 @@ export class CanvasRenderer {
     return combined;
   }
 
-  setForegroundFillStyle() {
+  setForeground() {
     this.context.fillStyle = (this.options?.foreground.hex ??
       CanvasRenderer.getDefaultOptions().foreground) as string;
+    this.context.strokeStyle = this.context.fillStyle;
   }
 
   static getDefaultOptions() {

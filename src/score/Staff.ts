@@ -21,7 +21,7 @@ const defaultStaffOptions: StaffOptions = {
 
 export class Staff {
   measures: Measure[];
-  options: Partial<StaffOptions>;
+  options: StaffOptions;
 
   constructor(measures: Measure[], options: Partial<StaffOptions>) {
     this.measures = measures;

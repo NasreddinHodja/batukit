@@ -23,11 +23,13 @@ export type NoteGlyphIndices = {
 type NoteOptions = {
   noteHead: NoteHead;
   stemDirection: StemDirection;
+  size: number;
 };
 
 const defaultNoteOptions: NoteOptions = {
   noteHead: 'black',
   stemDirection: 'up',
+  size: 48,
 };
 
 export class Note {
