@@ -21,12 +21,14 @@ export type NoteGlyphIndices = {
 };
 
 type NoteOptions = {
+  dotted: boolean;
   noteHead: NoteHead;
   stemDirection: StemDirection;
   size: number;
 };
 
 const defaultNoteOptions: NoteOptions = {
+  dotted: false,
   noteHead: 'black',
   stemDirection: 'up',
   size: 48,
