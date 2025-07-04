@@ -1,4 +1,5 @@
-import { layoutScore, Note, Score, Staff } from '@/score';
+import { Note, Score, Staff } from '@/score';
+import { layoutScore } from './layout';
 import { Color } from './Color';
 import opentype, { Font, Glyph, Path } from 'opentype.js';
 

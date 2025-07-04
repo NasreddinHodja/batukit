@@ -27,10 +27,13 @@ export const layoutScore = (score: Score): Renderable[] => {
   return renderables;
 };
 
+const NOTE_SPACING_SCALER = 50 as const;
+const NOTE_SPACING_RATIO = 0.777 as const;
+
 const getNoteSpacing = (note: Note): number => {
   const timeTicks = getNoteTicks(note);
-  const space = 0.777 * 0.777 * Math.sqrt(timeTicks);
-  return space * 50;
+  const space = NOTE_SPACING_RATIO * NOTE_SPACING_RATIO * Math.sqrt(timeTicks);
+  return space * NOTE_SPACING_SCALER;
 };
 
 const getNoteTicks = (note: Note): number => {
