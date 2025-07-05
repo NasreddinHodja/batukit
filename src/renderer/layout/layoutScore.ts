@@ -6,6 +6,9 @@ import {
   measureToRenderable,
 } from '@/renderables';
 
+const NOTE_SPACING_SCALER = 50 as const;
+const NOTE_SPACING_RATIO = 0.777 as const;
+
 export const layoutScore = (score: Score): Renderable[] => {
   const renderables: Renderable[] = [];
   let x = 50;
@@ -27,9 +30,6 @@ export const layoutScore = (score: Score): Renderable[] => {
   return renderables;
 };
 
-const NOTE_SPACING_SCALER = 50 as const;
-const NOTE_SPACING_RATIO = 0.777 as const;
-
 const getNoteSpacing = (note: Note): number => {
   const timeTicks = getNoteTicks(note);
   const space = NOTE_SPACING_RATIO * NOTE_SPACING_RATIO * Math.sqrt(timeTicks);
@@ -38,5 +38,10 @@ const getNoteSpacing = (note: Note): number => {
 
 const getNoteTicks = (note: Note): number => {
   const ticks = 64 / note.duration;
-  return ticks + (note.options.dotted ? ticks / 2 : 0);
+  return ticks + getAugmentedDuration(ticks, note.augmentationDots);
+};
+
+const getAugmentedDuration = (base: number, dots: number): number => {
+  const multiplier = 2 * (1 - 1 / 2 ** (dots + 1));
+  return base * multiplier;
 };

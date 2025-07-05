@@ -1,4 +1,4 @@
-import { noteHeadGlyphs, stemGlyphs, flagGlyphs } from '@/renderer';
+import { NOTE_HEAD_GLYPHS, STEM_GLYPHS, FLAG_GLYPHS, AUGMENTATION_DOT_GLYPH } from '@/renderer';
 
 type Step = 'c' | 'd' | 'e' | 'f' | 'g' | 'a' | 'b';
 type Accidental = '' | '#' | 'b' | '##' | 'bb' | 'n';
@@ -8,27 +8,34 @@ export type Pitch = `${Step}${Accidental}/${Octave}`;
 
 export type Duration = 1 | 2 | 4 | 8 | 16 | 32 | 64;
 
-export type NoteHead = keyof typeof noteHeadGlyphs;
-export type Stem = keyof typeof stemGlyphs;
-export type Flag = keyof typeof flagGlyphs;
+export type NoteHead = keyof typeof NOTE_HEAD_GLYPHS;
+export type Stem = keyof typeof STEM_GLYPHS;
+export type Flag = keyof typeof FLAG_GLYPHS;
 
 export type StemDirection = 'up' | 'down';
+
+export type AugmentationDot = 0 | 1 | 2 | 3;
 
 export type NoteGlyphIndices = {
   head: number;
   stem: number | null;
   flag: number | null;
+  augmentationDots: number[];
 };
 
 type NoteOptions = {
-  dotted: boolean;
+  pitch: Pitch;
+  duration: Duration;
+  augmentationDots: AugmentationDot;
   noteHead: NoteHead;
   stemDirection: StemDirection;
   size: number;
 };
 
 const defaultNoteOptions: NoteOptions = {
-  dotted: false,
+  pitch: 'e/5',
+  duration: 4,
+  augmentationDots: 0,
   noteHead: 'black',
   stemDirection: 'up',
   size: 48,
@@ -37,12 +44,19 @@ const defaultNoteOptions: NoteOptions = {
 export class Note {
   pitch: Pitch;
   duration: Duration;
-  options: NoteOptions;
+  augmentationDots: AugmentationDot;
+  noteHead: NoteHead;
+  stemDirection: StemDirection;
+  size: number;
 
-  constructor(pitch: Pitch, duration: Duration, options: Partial<NoteOptions>) {
-    this.pitch = pitch;
-    this.duration = duration;
-    this.options = { ...defaultNoteOptions, ...options };
+  constructor(options: Partial<NoteOptions>) {
+    const opts = { ...defaultNoteOptions, ...options };
+    this.pitch = opts.pitch;
+    this.duration = opts.duration;
+    this.augmentationDots = opts.augmentationDots;
+    this.noteHead = opts.noteHead;
+    this.stemDirection = opts.stemDirection;
+    this.size = opts.size;
   }
 
   toString(): string {
@@ -50,17 +64,29 @@ export class Note {
   }
 
   toGlyphIndices(): NoteGlyphIndices {
-    const headIndex = noteHeadGlyphs[this.options.noteHead].index;
+    const headIndex = NOTE_HEAD_GLYPHS[this.noteHead].index;
     let stemIndex = null;
     let flagIndex = null;
+
     if (this.hasStem()) {
-      stemIndex = stemGlyphs.normal.index;
+      stemIndex = STEM_GLYPHS.normal.index;
     }
+
     if (this.hasFlag()) {
-      const glyphName = `${this.options.stemDirection}${this.duration}` as Flag;
-      flagIndex = flagGlyphs[glyphName].index;
+      const glyphName = `${this.stemDirection}${this.duration}` as Flag;
+      flagIndex = FLAG_GLYPHS[glyphName].index;
     }
-    return { head: headIndex, stem: stemIndex, flag: flagIndex };
+
+    const augmentationDotIndexes = Array<number>(this.augmentationDots).fill(
+      AUGMENTATION_DOT_GLYPH.index
+    );
+
+    return {
+      head: headIndex,
+      stem: stemIndex,
+      flag: flagIndex,
+      augmentationDots: augmentationDotIndexes,
+    };
   }
 
   hasStem(): boolean {

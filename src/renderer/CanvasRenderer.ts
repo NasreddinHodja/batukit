@@ -12,6 +12,7 @@ type NoteGlyphs = {
   head: Glyph;
   stem: Glyph | null;
   flag: Glyph | null;
+  augmentationDots: Glyph[];
 };
 
 export class CanvasRenderer {
@@ -37,7 +38,9 @@ export class CanvasRenderer {
     options?: RenderOptions
   ): Promise<CanvasRenderer> {
     const renderer = new CanvasRenderer(ctx, width, height, options);
+
     await renderer.ensureFontLoaded();
+
     return renderer;
   }
 
@@ -82,11 +85,11 @@ export class CanvasRenderer {
   }
 
   drawNote(note: Note, x: number, y: number) {
-    const size = note.options.size;
+    const size = note.size;
     const paths = [];
     const glyphs = this.getNoteGlyphs(note);
     const headPath = this.getGlyphPath(glyphs.head, x, y, size);
-    const stemUp = note.options.stemDirection === 'up';
+    const stemUp = note.stemDirection === 'up';
     paths.push(headPath);
 
     if (glyphs.stem !== null) {
@@ -101,6 +104,17 @@ export class CanvasRenderer {
       const yOffset = stemUp ? size * -0.8 : size * 0.86;
       const flagPath = this.getGlyphPath(glyphs.flag, x + xOffset, y + yOffset, size);
       paths.push(flagPath);
+    }
+
+    if (glyphs.augmentationDots.length > 0) {
+      const baseXOffset = size * 0.35;
+      const yOffset = size * -0.1;
+      let xOffset = baseXOffset;
+      glyphs.augmentationDots.forEach((glyph) => {
+        const dotPath = this.getGlyphPath(glyph, x + xOffset, y + yOffset, size);
+        paths.push(dotPath);
+        xOffset += baseXOffset * 0.5;
+      });
     }
 
     const path = this.combinePaths(paths);
@@ -122,7 +136,16 @@ export class CanvasRenderer {
       flagGlyph = this.getGlyph(indices.flag);
     }
 
-    return { head: headGlyph, stem: stemGlyph, flag: flagGlyph };
+    const augmentationDotGlyphs = Array<Glyph>(indices.augmentationDots.length).fill(
+      this.getGlyph(indices.augmentationDots[0] ?? 0)
+    );
+
+    return {
+      head: headGlyph,
+      stem: stemGlyph,
+      flag: flagGlyph,
+      augmentationDots: augmentationDotGlyphs,
+    };
   }
 
   getGlyph(index: number): Glyph {
