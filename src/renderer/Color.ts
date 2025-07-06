@@ -6,10 +6,14 @@ export class Color {
       throw new Error(`Invalid hex color: ${hex}`);
     }
 
-    this._hex = hex;
+    this._hex = hex.toLocaleLowerCase();
   }
 
   get hex() {
+    return this._hex;
+  }
+
+  toString(): string {
     return this._hex;
   }
 
